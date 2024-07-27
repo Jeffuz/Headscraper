@@ -15,7 +15,7 @@ const Navbar = () => {
       <div>
         {/* List of call to actions */}
         <button 
-        className="py-2 px-6 bg-primary text-lg font-medium rounded-sm shadow-lg shadow-primary/50"
+        className="py-2 px-6 bg-primary text-lg font-medium rounded-sm shadow-lg shadow-primary/50 hover:bg-primary/90 delay-50"
         onClick={() => setOpenModal(true)}
         >
           Login
