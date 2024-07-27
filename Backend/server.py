@@ -1,9 +1,12 @@
-import firebase_admin
-from firebase_admin import db, credentials
+from flask import Flask
 
-cred = credentials.Certificate("credentials.json")
-firebase_admin.initialize_app(cred, {"databaseURL": "https://headscrapers-b079a-default-rtdb.firebaseio.com/"})
+app = Flask(__name__)
 
-ref = db.reference("/")
+# Members API route
 
-ref.get()
+@app.route("/members")
+def members():
+    return {members: ["Member1", "Member2", "Member3"]}
+
+if __name__ == "__main__":
+    app.run(debug=True)
