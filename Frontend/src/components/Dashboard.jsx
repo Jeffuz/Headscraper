@@ -65,11 +65,11 @@ const Dashboard = () => {
             <div className="flex flex-col font-normal gap-3">
               {/* Title */}
               <div className="flex flex-col gap-2">
-                <div className="text-md">Title</div>
+                <div className="text-md">Board Name</div>
                 <input
                   className="bg-[#0A0F1D] appearance-none border-lg border border-white/10 rounded-lg py-2 px-4 text-white leading-tight focus:outline-none focus:border-primary focus:border-2"
                   type="text"
-                  placeholder="Enter title here"
+                  placeholder="Enter board name here"
                 />
               </div>
               {/* Description */}
@@ -78,7 +78,7 @@ const Dashboard = () => {
                 <input
                   className="bg-[#0A0F1D] appearance-none border-lg border border-white/10 rounded-lg py-2 px-4 text-white leading-tight focus:outline-none focus:border-primary focus:border-2"
                   type="text"
-                  placeholder="Enter description here"
+                  placeholder="Enter board description here"
                 />
               </div>
               {/* Continue */}
