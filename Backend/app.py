@@ -55,8 +55,27 @@ def login():
     except Exception as e:
         return jsonify({"error": str(e)}), 400
 
-from flask import request, jsonify
-
+@app.route('/google-login', methods=['POST'])
+def google_login():
+    data = request.get_json()
+    id_token = data.get('idToken')
+    
+    if not id_token:
+        return jsonify({"error": "ID token is missing"}), 400
+    try:
+        # Verify the ID token
+        decoded_token = auth.verify_id_token(id_token)
+        uid = decoded_token['uid']
+        user = auth.get_user(uid)
+        user_info = {
+            "uid": user.uid,
+            "email": user.email,
+            "display_name": user.display_name
+        }
+        return jsonify({"message": "Successfully logged in", "user_info": user_info}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+    
 @app.route('/assignments', methods=['POST'])
 def create_assignment():
     data = request.get_json()
