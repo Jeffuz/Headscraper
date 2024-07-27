@@ -73,20 +73,22 @@ def create_assignment():
     token = parts[1]
 
     try:
-        # Get user_id from the token using Firebase Auth
         user = auth.get_account_info(token)
         user_id = user['users'][0]['localId'] if user and 'users' in user and len(user['users']) > 0 else None
-        
+
         if user_id:
+            existing_assignments = db.child(f'assignments/{user_id}').order_by_child('title').equal_to(data.get('title')).get()
+            if existing_assignments.each():
+                return jsonify({"error": "An assignment with this title already exists"}), 409
+
             assignment = {
                 "title": data.get('title'),
                 "type": data.get('type'),
                 "due_date": data.get('due_date'),
                 "open_date": data.get('open_date'),
-                "status": "to do"  # or any default value you want to set
+                "status": "to do"
             }
-            
-            # Save the assignment to Firebase Realtime Database
+
             db.child(f'assignments/{user_id}').push(assignment)
             return jsonify({"success": True}), 201
         else:
@@ -94,25 +96,17 @@ def create_assignment():
     except Exception as e:
         return jsonify({"error": str(e)}), 400
 
-
-@app.route('/assignments/<assignment_id>', methods=['PATCH'])
-def update_assignment(assignment_id):
-    data = request.get_json()
-    token = request.headers.get('Authorization').split(' ')[1]
-    user_id = get_user_id(token)
-
-    if user_id:
-        assignment_ref = db.child("assignments").child(user_id).child(assignment_id)
-        assignment_ref.update(data)
-        return jsonify({"message": "Assignment updated"}), 200
-    else:
-        return jsonify({"error": "Unauthorized"}), 401
-
 @app.route('/assignments', methods=['GET'])
 def get_assignments():
     auth_header = request.headers.get('Authorization')
     if not auth_header:
         return jsonify({"error": "Authorization header is missing"}), 401
+
+    parts = auth_header.split(' ')
+    if len(parts) != 2 or parts[0] != 'Bearer':
+        return jsonify({"error": "Invalid Authorization header format"}), 400
+
+    token = parts[1]
 
     try:
         token = auth_header.split(' ')[1]
@@ -126,6 +120,75 @@ def get_assignments():
         else:
             return jsonify({"error": "No assignments found"}), 404
 
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
+@app.route('/assignments', methods=['DELETE'])
+def delete_assignment_by_title():
+    data = request.get_json()
+    title = data.get('title')
+
+    auth_header = request.headers.get('Authorization')
+    if not auth_header:
+        return jsonify({"error": "Authorization header is missing"}), 401
+
+    parts = auth_header.split(' ')
+    if len(parts) != 2 or parts[0] != 'Bearer':
+        return jsonify({"error": "Invalid Authorization header format"}), 400
+
+    token = parts[1]
+
+    try:
+        user = auth.get_account_info(token)
+        user_id = user['users'][0]['localId'] if user and 'users' in user and len(user['users']) > 0 else None
+
+        if user_id:
+            assignments = db.child(f'assignments/{user_id}').order_by_child('title').equal_to(title).get()
+            if assignments.each():
+                for assignment in assignments.each():
+                    db.child(f'assignments/{user_id}/{assignment.key()}').remove()
+                return jsonify({"message": "Assignment(s) deleted"}), 200
+            else:
+                return jsonify({"error": "No assignments found with the given title"}), 404
+        else:
+            return jsonify({"error": "Invalid token"}), 401
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
+@app.route('/assignments/status', methods=['PATCH'])
+def update_assignment_status(assignment_id):
+    data = request.get_json()
+    new_status = data.get('status')
+
+    if not new_status:
+        return jsonify({"error": "Status is missing"}), 400
+
+    auth_header = request.headers.get('Authorization')
+    if not auth_header:
+        return jsonify({"error": "Authorization header is missing"}), 400
+
+    parts = auth_header.split(' ')
+    if len(parts) != 2 or parts[0] != 'Bearer':
+        return jsonify({"error": "Invalid Authorization header format"}), 400
+
+    token = parts[1]
+
+    try:
+        # Get user_id from the token using Firebase Auth
+        user = auth.get_account_info(token)
+        user_id = user['users'][0]['localId'] if user and 'users' in user and len(user['users']) > 0 else None
+
+        if user_id:
+            assignment_ref = db.child(f'assignments/{user_id}').child(assignment_id)
+            assignment = assignment_ref.get()
+
+            if not assignment.val():
+                return jsonify({"error": "Assignment not found"}), 404
+
+            assignment_ref.update({"status": new_status})
+            return jsonify({"message": "Assignment status updated"}), 200
+        else:
+            return jsonify({"error": "Invalid token"}), 401
     except Exception as e:
         return jsonify({"error": str(e)}), 400
 if __name__ == '__main__':
