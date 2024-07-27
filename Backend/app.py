@@ -54,7 +54,7 @@ def login():
     except Exception as e:
         return jsonify({"error": str(e)}), 400
 
-    
+
 @app.route('/assignments', methods=['POST'])
 def create_assignment():
     data = request.get_json()
@@ -118,8 +118,7 @@ def get_assignments():
         if assignments.each():
             return jsonify(assignments.val()), 200
         else:
-            return jsonify({"error": "No assignments found"}), 404
-
+            return jsonify({"message": "No assignments found. Please enter your first assignment."}), 404
     except Exception as e:
         return jsonify({"error": str(e)}), 400
 
@@ -155,7 +154,7 @@ def delete_assignment_by_title():
     except Exception as e:
         return jsonify({"error": str(e)}), 400
 
-@app.route('/assignments/status', methods=['PATCH'])
+@app.route('/assignments/status', methods=['PUT'])
 def update_assignment_status(assignment_id):
     data = request.get_json()
     new_status = data.get('status')
@@ -174,7 +173,6 @@ def update_assignment_status(assignment_id):
     token = parts[1]
 
     try:
-        # Get user_id from the token using Firebase Auth
         user = auth.get_account_info(token)
         user_id = user['users'][0]['localId'] if user and 'users' in user and len(user['users']) > 0 else None
 
@@ -191,5 +189,44 @@ def update_assignment_status(assignment_id):
             return jsonify({"error": "Invalid token"}), 401
     except Exception as e:
         return jsonify({"error": str(e)}), 400
+    
+@app.route('/boards', methods=['POST'])
+def create_board():
+    data = request.get_json()
+
+    auth_header = request.headers.get('Authorization')
+    print(f"Authorization Header: {auth_header}")  # Log the header value
+
+    if not auth_header:
+        return jsonify({"error": "Authorization header is missing"}), 400
+
+    parts = auth_header.split(' ')
+
+    if len(parts) != 2 or parts[0] != 'Bearer':
+        return jsonify({"error": "Invalid Authorization header format"}), 400
+
+    token = parts[1]
+
+    try:
+        user = auth.get_account_info(token)
+        user_id = user['users'][0]['localId'] if user and 'users' in user and len(user['users']) > 0 else None
+
+        if user_id:
+            existing_boards = db.child(f'boards/{user_id}').order_by_child('title').equal_to(data.get('title')).get()
+            if existing_boards.each():
+                return jsonify({"error": "a board with this title already exists"}), 409
+
+            board = {
+                "title": data.get('title'),
+                "description": data.get('description'),
+            }
+
+            db.child(f'assignments/{user_id}').push(board)
+            return jsonify({"success": True}), 201
+        else:
+            return jsonify({"error": "Invalid token"}), 401
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+    
 if __name__ == '__main__':
     app.run(debug=True)
