@@ -3,8 +3,6 @@ import os
 from datetime import datetime
 from flask import Flask, request, jsonify
 import pyrebase
-import firebase_admin
-from firebase_admin import credentials, auth
 
 app = Flask(__name__)
 
@@ -21,22 +19,6 @@ config = {
     "appId": os.getenv('FIREBASE_APP_ID'),
     "measurementId": os.getenv('FIREBASE_MEASUREMENT_ID')
 }
-
-# Firebase Admin SDK configuration
-cred = credentials.Certificate({
-    "type": os.getenv("FIREBASE_TYPE"),
-    "project_id": os.getenv("FIREBASE_PROJECT_ID"),
-    "private_key_id": os.getenv("FIREBASE_PRIVATE_KEY_ID"),
-    "private_key": os.getenv("FIREBASE_PRIVATE_KEY").replace('\\n', '\n'),
-    "client_email": os.getenv("FIREBASE_CLIENT_EMAIL"),
-    "client_id": os.getenv("FIREBASE_CLIENT_ID"),
-    "auth_uri": os.getenv("FIREBASE_AUTH_URI"),
-    "token_uri": os.getenv("FIREBASE_TOKEN_URI"),
-    "auth_provider_x509_cert_url": os.getenv("FIREBASE_AUTH_PROVIDER_CERT_URL"),
-    "client_x509_cert_url": os.getenv("FIREBASE_CLIENT_CERT_URL")
-})
-
-firebase_admin.initialize_app(cred)
 
 firebase = pyrebase.initialize_app(config)
 auth = firebase.auth()
@@ -168,19 +150,5 @@ def get_assignments():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 400
-
-def verify_token(id_token):
-    try:
-        decoded_token = auth.verify_id_token(id_token)
-        return decoded_token  # Returns a dictionary with user information if valid
-    except auth.InvalidIdTokenError:
-        return {"error": "Invalid ID token"}
-    except auth.ExpiredIdTokenError:
-        return {"error": "ID token has expired"}
-    except auth.RevokedIdTokenError:
-        return {"error": "ID token has been revoked"}
-    except Exception as e:
-        return {"error": str(e)}
-    
 if __name__ == '__main__':
     app.run(debug=True)
