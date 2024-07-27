@@ -1,11 +1,3 @@
-import firebase_admin
-from firebase_admin import db, credentials
-import os
-from dotenv import load_dotenv
-import firebase_admin
-from firebase_admin import credentials
-from firebase_admin import db
-
 import os
 from dotenv import load_dotenv
 import firebase_admin
