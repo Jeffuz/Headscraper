@@ -30,7 +30,7 @@ def get_user_id(token):
         return user_info['users'][0]['localId']
     except:
         return None
-
+# http://localhost:5000/signup
 @app.route('/signup', methods=['POST'])
 def signup():
     data = request.get_json()
@@ -41,7 +41,7 @@ def signup():
         return jsonify({"message": "Successfully created account"}), 201
     except Exception as e:
         return jsonify({"error": str(e)}), 400
-
+# http://localhost:5000/login
 @app.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
@@ -54,7 +54,7 @@ def login():
     except Exception as e:
         return jsonify({"error": str(e)}), 400
 
-
+# http://localhost:5000/boards/<board_id>/assignments
 @app.route('/boards/<board_id>/assignments', methods=['POST'])
 def create_assignment(board_id):
     data = request.get_json()
@@ -95,7 +95,7 @@ def create_assignment(board_id):
 
 
 
-
+# http://localhost:5000/boards/<board_id>/assignments
 @app.route('/boards/<board_id>/assignments', methods=['GET'])
 def get_assignments(board_id):
     auth_header = request.headers.get('Authorization')
@@ -127,7 +127,7 @@ def get_assignments(board_id):
     except Exception as e:
         return jsonify({"error": str(e)}), 400
 
-
+# http://localhost:5000/boards/<board_id>/assignments
 @app.route('/boards/<board_id>/assignments', methods=['DELETE'])
 def delete_assignment(board_id):
     data = request.get_json()
@@ -179,7 +179,7 @@ def delete_assignment(board_id):
         return jsonify({"error": str(e)}), 400
 
 
-
+# http://localhost:5000/boards/<board_id>/assignments/<status>
 @app.route('/boards/<board_id>/assignments/<assignment_id>/status', methods=['PUT'])
 def update_assignment_status(board_id, assignment_id):
     data = request.get_json()
@@ -216,7 +216,7 @@ def update_assignment_status(board_id, assignment_id):
     except Exception as e:
         return jsonify({"error": str(e)}), 400
 
-    
+# http://localhost:5000/boards
 @app.route('/boards', methods=['POST'])
 def create_board():
     data = request.get_json()
