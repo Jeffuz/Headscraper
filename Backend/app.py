@@ -128,38 +128,56 @@ def get_assignments(board_id):
         return jsonify({"error": str(e)}), 400
 
 
-@app.route('/boards/,<board_id>assignments', methods=['DELETE'])
+@app.route('/boards/<board_id>/assignments', methods=['DELETE'])
 def delete_assignment(board_id):
-    return "Route words", 200
-    # data = request.get_json()
-    # title = data.get('title')
+    data = request.get_json()
+    title = data.get('title')
 
-    # auth_header = request.headers.get('Authorization')
-    # if not auth_header:
-    #     return jsonify({"error": "Authorization header is missing"}), 401
+    # Debugging print statements
+    print(f"Received request to delete assignment with title: {title} from board: {board_id}")
 
-    # parts = auth_header.split(' ')
-    # if len(parts) != 2 or parts[0] != 'Bearer':
-    #     return jsonify({"error": "Invalid Authorization header format"}), 400
+    auth_header = request.headers.get('Authorization')
+    print(f"Authorization Header: {auth_header}")  # Log the header value
 
-    # token = parts[1]
+    if not auth_header:
+        print("Authorization header is missing")  # Debugging line
+        return jsonify({"error": "Authorization header is missing"}), 401
 
-    # try:
-    #     user = auth.get_account_info(token)
-    #     user_id = user['users'][0]['localId'] if user and 'users' in user and len(user['users']) > 0 else None
+    parts = auth_header.split(' ')
+    if len(parts) != 2 or parts[0] != 'Bearer':
+        print("Invalid Authorization header format")  # Debugging line
+        return jsonify({"error": "Invalid Authorization header format"}), 400
 
-    #     if user_id:
-    #         assignments = db.child(f'boards/{user_id}/{board_id}/assignments').order_by_child('title').equal_to(title).get()
-    #         if assignments.each():
-    #             for assignment in assignments.each():
-    #                 db.child(f'boards/{user_id}/{board_id}/assignments/{assignment.key()}').remove()
-    #             return jsonify({"message": "Assignment(s) deleted"}), 200
-    #         else:
-    #             return jsonify({"error": "No assignments found with the given title"}), 404
-    #     else:
-    #         return jsonify({"error": "Invalid token"}), 401
-    # except Exception as e:
-    #     return jsonify({"error": str(e)}), 400
+    token = parts[1]
+
+    try:
+        user = auth.get_account_info(token)
+        print(f"User Info: {user}")  # Debugging line
+        user_id = user['users'][0]['localId'] if user and 'users' in user and len(user['users']) > 0 else None
+
+        if user_id:
+            print(f"User ID: {user_id}")  # Debugging line
+            assignments_ref = db.child(f'boards/{user_id}/{board_id}/assignments')
+            print("line 160 passed")
+            assignments = assignments_ref.order_by_child('title').equal_to(title).get()
+            print("line 161 passed")
+            print(f"Assignments found: {assignments.val()}")  # Debugging line
+
+            if assignments.each():
+                for assignment in assignments.each():
+                    print(f"Deleting assignment with key: {assignment.key()}")  # Debugging line
+                    db.child(f'boards/{user_id}/{board_id}/assignments/{assignment.key()}').remove()
+                return jsonify({"message": "Assignment(s) deleted"}), 200
+            else:
+                print("No assignments found with the given title")  # Debugging line
+                return jsonify({"error": "No assignments found with the given title"}), 404
+        else:
+            print("Invalid token")  # Debugging line
+            return jsonify({"error": "Invalid token"}), 401
+    except Exception as e:
+        print(f"Error: {str(e)}")  # Debugging line
+        return jsonify({"error": str(e)}), 400
+
 
 
 @app.route('/boards/<board_id>/assignments/<assignment_id>/status', methods=['PUT'])
