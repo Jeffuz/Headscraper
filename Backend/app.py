@@ -1,6 +1,9 @@
+from flask import Flask, request, jsonify
 from dotenv import load_dotenv
 import os
 import pyrebase
+
+app = Flask(__name__)
 
 # Load environment variables from the .env file
 load_dotenv()
@@ -17,47 +20,30 @@ config = {
 }
 
 firebase = pyrebase.initialize_app(config)
-db = firebase.database()
 auth = firebase.auth()
 
-# Example of getting data from the Realtime Database
-data = db.child("some_node").get()
-print(data.val())
-
+@app.route('/signup', methods=['POST'])
 def signup():
-    email = input("enter email: ")
-    password = input("enter password: ")
-    user = auth.create_user_with_email_and_password(email, password)
-    print("Successfully created account")
+    data = request.get_json()
+    email = data.get('email')
+    password = data.get('password')
+    try:
+        user = auth.create_user_with_email_and_password(email, password)
+        return jsonify({"message": "Successfully created account"}), 201
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
 
-signup()
+@app.route('/login', methods=['POST'])
+def login():
+    data = request.get_json()
+    email = data.get('email')
+    password = data.get('password')
+    try:
+        login = auth.sign_in_with_email_and_password(email, password)
+        user_info = auth.get_account_info(login['idToken'])
+        return jsonify({"message": "Successfully logged in", "user_info": user_info}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
 
-
-# # Create a reference to the root of the database
-# db = firebase.database()
-
-# # Print initial data from Firebase Realtime Database
-# data = db.child("some_node").get()
-# print(data.val())
-
-# app = Flask(__name__)
-
-# # Define Flask routes
-# @app.route('/')
-# def home():
-#     return 'index.html'
-
-# @app.route('/login')
-# def login():
-#     return 'Login Page'
-
-# @app.route('/register')
-# def register():
-#     return 'Register Page'
-
-# @app.route('/members')
-# def members():
-#     return {"members": ["Member1", "Member2", "Member3"]}
-
-# if __name__ == "__main__":
-#     app.run(debug=True)
+if __name__ == '__main__':
+    app.run(debug=True)
