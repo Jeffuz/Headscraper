@@ -179,42 +179,51 @@ def delete_assignment(board_id):
         return jsonify({"error": str(e)}), 400
 
 
-# http://localhost:5000/boards/<board_id>/assignments/<status>
+# http://localhost:5000/boards/<board_id>/assignments/<assignment_id/status
 @app.route('/boards/<board_id>/assignments/<assignment_id>/status', methods=['PUT'])
 def update_assignment_status(board_id, assignment_id):
-    data = request.get_json()
-    new_status = data.get('status')
-
-    if not new_status:
-        return jsonify({"error": "Status is missing"}), 400
-
-    auth_header = request.headers.get('Authorization')
-    if not auth_header:
-        return jsonify({"error": "Authorization header is missing"}), 400
-
-    parts = auth_header.split(' ')
-    if len(parts) != 2 or parts[0] != 'Bearer':
-        return jsonify({"error": "Invalid Authorization header format"}), 400
-
-    token = parts[1]
-
     try:
+        data = request.get_json()
+        new_status = data.get('status')
+
+        if not new_status:
+            return jsonify({"error": "Status is missing"}), 400
+
+        auth_header = request.headers.get('Authorization')
+        if not auth_header:
+            return jsonify({"error": "Authorization header is missing"}), 400
+
+        parts = auth_header.split(' ')
+        if len(parts) != 2 or parts[0] != 'Bearer':
+            return jsonify({"error": "Invalid Authorization header format"}), 400
+
+        token = parts[1]
         user = auth.get_account_info(token)
-        user_id = user['users'][0]['localId'] if user and 'users' in user and len(user['users']) > 0 else None
-
-        if user_id:
-            assignment_ref = db.child(f'boards/{user_id}/{board_id}/assignments').child(assignment_id)
-            assignment = assignment_ref.get()
-
-            if not assignment.val():
-                return jsonify({"error": "Assignment not found"}), 404
-
-            assignment_ref.update({"status": new_status})
-            return jsonify({"message": "Assignment status updated"}), 200
-        else:
+        if not user or 'users' not in user or not user['users']:
             return jsonify({"error": "Invalid token"}), 401
+
+        user_id = user['users'][0]['localId']
+
+        # Correct path to the specific assignment
+        assignment_path = f'boards/{user_id}/{board_id}/assignments/{assignment_id}'
+        print(f"Trying to access path: {assignment_path}")
+
+        assignment_ref = db.child(assignment_path)
+        assignment = assignment_ref.get()
+
+        # Print the data retrieved from Firebase for debugging
+        assignment_data = assignment.val()
+        print(f"Assignment data: {assignment_data}")
+
+        if not assignment_data:
+            return jsonify({"error": "Assignment not found"}), 404
+
+        # Update only the status field
+        assignment_ref.child('status').set(new_status)
+        return jsonify({"message": "Assignment status updated to " + new_status}), 200
+
     except Exception as e:
-        return jsonify({"error": str(e)}), 400
+        return jsonify({"error": str(e)}), 500
 
 # http://localhost:5000/boards
 @app.route('/boards', methods=['POST'])
