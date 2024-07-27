@@ -6,10 +6,12 @@ import Navbar from "./components/Navbar";
 import Modal from "./components/Modal";
 
 import { LoginContext } from "./contexts/LoginContext";
+import Dashboard from "./components/Dashboard";
 
 function App() {
   const [openLoginModal, setOpenLoginModal] = useState(false);
   const [openSignupModal, setOpenSignupModal] = useState(false);
+
   return (
     <div className="bg-secondary h-screen">
       <LoginContext.Provider
@@ -21,8 +23,12 @@ function App() {
         }}
       >
         {/* Navbar */}
-        <div className="py-8 px-16">
+        <div className="py-8 px-16 fixed w-screen">
           <Navbar />
+        </div>
+        {/* Dashboard */}
+        <div className="">
+          <Dashboard/>
         </div>
         {/* Pop up Modal for Login */}
         <Modal open={openLoginModal} onClose={() => setOpenLoginModal(false)}>
