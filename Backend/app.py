@@ -1,9 +1,10 @@
-from flask import Flask, request, jsonify
 from dotenv import load_dotenv
 import os
-import pyrebase
-from flask import g
 from datetime import datetime
+from flask import Flask, request, jsonify
+import pyrebase
+import firebase_admin
+from firebase_admin import credentials, auth
 
 app = Flask(__name__)
 
@@ -20,6 +21,22 @@ config = {
     "appId": os.getenv('FIREBASE_APP_ID'),
     "measurementId": os.getenv('FIREBASE_MEASUREMENT_ID')
 }
+
+# Firebase Admin SDK configuration
+cred = credentials.Certificate({
+    "type": os.getenv("FIREBASE_TYPE"),
+    "project_id": os.getenv("FIREBASE_PROJECT_ID"),
+    "private_key_id": os.getenv("FIREBASE_PRIVATE_KEY_ID"),
+    "private_key": os.getenv("FIREBASE_PRIVATE_KEY").replace('\\n', '\n'),
+    "client_email": os.getenv("FIREBASE_CLIENT_EMAIL"),
+    "client_id": os.getenv("FIREBASE_CLIENT_ID"),
+    "auth_uri": os.getenv("FIREBASE_AUTH_URI"),
+    "token_uri": os.getenv("FIREBASE_TOKEN_URI"),
+    "auth_provider_x509_cert_url": os.getenv("FIREBASE_AUTH_PROVIDER_CERT_URL"),
+    "client_x509_cert_url": os.getenv("FIREBASE_CLIENT_CERT_URL")
+})
+
+firebase_admin.initialize_app(cred)
 
 firebase = pyrebase.initialize_app(config)
 auth = firebase.auth()
@@ -51,6 +68,7 @@ def login():
     try:
         login = auth.sign_in_with_email_and_password(email, password)
         user_info = auth.get_account_info(login['idToken'])
+        # print(verify_token(login['idToken']))
         return jsonify({"message": "Successfully logged in", "idToken": login['idToken'], "user_info": user_info}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 400
@@ -62,6 +80,7 @@ def google_login():
     
     if not id_token:
         return jsonify({"error": "ID token is missing"}), 400
+    
     try:
         # Verify the ID token
         decoded_token = auth.verify_id_token(id_token)
@@ -131,14 +150,37 @@ def update_assignment(assignment_id):
 
 @app.route('/assignments', methods=['GET'])
 def get_assignments():
-    token = request.headers.get('Authorization').split(' ')[1]
-    user_id = get_user_id(token)
+    auth_header = request.headers.get('Authorization')
+    if not auth_header:
+        return jsonify({"error": "Authorization header is missing"}), 401
 
-    if user_id:
+    try:
+        token = auth_header.split(' ')[1]
+        user_id = get_user_id(token)
+        if not user_id:
+            return jsonify({"error": "Invalid token"}), 401
+
         assignments = db.child("assignments").child(user_id).get()
-        return jsonify(assignments.val()), 200
-    else:
-        return jsonify({"error": "Unauthorized"}), 401
+        if assignments.each():
+            return jsonify(assignments.val()), 200
+        else:
+            return jsonify({"error": "No assignments found"}), 404
 
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
+def verify_token(id_token):
+    try:
+        decoded_token = auth.verify_id_token(id_token)
+        return decoded_token  # Returns a dictionary with user information if valid
+    except auth.InvalidIdTokenError:
+        return {"error": "Invalid ID token"}
+    except auth.ExpiredIdTokenError:
+        return {"error": "ID token has expired"}
+    except auth.RevokedIdTokenError:
+        return {"error": "ID token has been revoked"}
+    except Exception as e:
+        return {"error": str(e)}
+    
 if __name__ == '__main__':
     app.run(debug=True)
