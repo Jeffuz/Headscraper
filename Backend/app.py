@@ -2,6 +2,8 @@ from flask import Flask, request, jsonify
 from dotenv import load_dotenv
 import os
 import pyrebase
+from flask import g
+from datetime import datetime
 
 app = Flask(__name__)
 
@@ -21,6 +23,14 @@ config = {
 
 firebase = pyrebase.initialize_app(config)
 auth = firebase.auth()
+db = firebase.database()
+
+def get_user_id(token):
+    try:
+        user_info = auth.get_account_info(token)
+        return user_info['users'][0]['localId']
+    except:
+        return None
 
 @app.route('/signup', methods=['POST'])
 def signup():
@@ -41,9 +51,75 @@ def login():
     try:
         login = auth.sign_in_with_email_and_password(email, password)
         user_info = auth.get_account_info(login['idToken'])
-        return jsonify({"message": "Successfully logged in", "user_info": user_info}), 200
+        return jsonify({"message": "Successfully logged in", "idToken": login['idToken'], "user_info": user_info}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 400
+
+from flask import request, jsonify
+
+@app.route('/assignments', methods=['POST'])
+def create_assignment():
+    data = request.get_json()
+
+    auth_header = request.headers.get('Authorization')
+    print(f"Authorization Header: {auth_header}")  # Log the header value
+
+    if not auth_header:
+        return jsonify({"error": "Authorization header is missing"}), 400
+
+    parts = auth_header.split(' ')
+
+    if len(parts) != 2 or parts[0] != 'Bearer':
+        return jsonify({"error": "Invalid Authorization header format"}), 400
+
+    token = parts[1]
+
+    try:
+        # Get user_id from the token using Firebase Auth
+        user = auth.get_account_info(token)
+        user_id = user['users'][0]['localId'] if user and 'users' in user and len(user['users']) > 0 else None
+        
+        if user_id:
+            assignment = {
+                "title": data.get('title'),
+                "type": data.get('type'),
+                "due_date": data.get('due_date'),
+                "open_date": data.get('open_date'),
+                "status": "to do"  # or any default value you want to set
+            }
+            
+            # Save the assignment to Firebase Realtime Database
+            db.child(f'assignments/{user_id}').push(assignment)
+            return jsonify({"success": True}), 201
+        else:
+            return jsonify({"error": "Invalid token"}), 401
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
+
+@app.route('/assignments/<assignment_id>', methods=['PATCH'])
+def update_assignment(assignment_id):
+    data = request.get_json()
+    token = request.headers.get('Authorization').split(' ')[1]
+    user_id = get_user_id(token)
+
+    if user_id:
+        assignment_ref = db.child("assignments").child(user_id).child(assignment_id)
+        assignment_ref.update(data)
+        return jsonify({"message": "Assignment updated"}), 200
+    else:
+        return jsonify({"error": "Unauthorized"}), 401
+
+@app.route('/assignments', methods=['GET'])
+def get_assignments():
+    token = request.headers.get('Authorization').split(' ')[1]
+    user_id = get_user_id(token)
+
+    if user_id:
+        assignments = db.child("assignments").child(user_id).get()
+        return jsonify(assignments.val()), 200
+    else:
+        return jsonify({"error": "Unauthorized"}), 401
 
 if __name__ == '__main__':
     app.run(debug=True)
