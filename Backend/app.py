@@ -50,32 +50,10 @@ def login():
     try:
         login = auth.sign_in_with_email_and_password(email, password)
         user_info = auth.get_account_info(login['idToken'])
-        # print(verify_token(login['idToken']))
         return jsonify({"message": "Successfully logged in", "idToken": login['idToken'], "user_info": user_info}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 400
 
-@app.route('/google-login', methods=['POST'])
-def google_login():
-    data = request.get_json()
-    id_token = data.get('idToken')
-    
-    if not id_token:
-        return jsonify({"error": "ID token is missing"}), 400
-    
-    try:
-        # Verify the ID token
-        decoded_token = auth.verify_id_token(id_token)
-        uid = decoded_token['uid']
-        user = auth.get_user(uid)
-        user_info = {
-            "uid": user.uid,
-            "email": user.email,
-            "display_name": user.display_name
-        }
-        return jsonify({"message": "Successfully logged in", "user_info": user_info}), 200
-    except Exception as e:
-        return jsonify({"error": str(e)}), 400
     
 @app.route('/assignments', methods=['POST'])
 def create_assignment():
