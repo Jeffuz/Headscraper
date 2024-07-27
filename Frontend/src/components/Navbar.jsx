@@ -1,7 +1,9 @@
-import React from "react";
 import { TfiBlackboard } from "react-icons/tfi";
+import { LoginContext } from "../contexts/LoginContext";
+import { useContext } from "react";
 
 const Navbar = () => {
+  const { setOpenModal } = useContext(LoginContext);
   return (
     <div className="flex justify-between">
       {/* Company Name - Left*/}
@@ -12,7 +14,12 @@ const Navbar = () => {
       {/* Button Interaction - Right */}
       <div>
         {/* List of call to actions */}
-        <button className="py-3 px-6 bg-primary text-lg font-medium rounded-sm">Login</button>
+        <button 
+        className="py-2 px-6 bg-primary text-lg font-medium rounded-sm shadow-lg shadow-primary/50"
+        onClick={() => setOpenModal(true)}
+        >
+          Login
+        </button>
       </div>
     </div>
   );
