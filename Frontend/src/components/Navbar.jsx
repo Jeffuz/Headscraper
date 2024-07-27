@@ -3,7 +3,7 @@ import { LoginContext } from "../contexts/LoginContext";
 import { useContext } from "react";
 
 const Navbar = () => {
-  const { setOpenModal } = useContext(LoginContext);
+  const { setOpenLoginModal } = useContext(LoginContext);
   return (
     <div className="flex justify-between">
       {/* Company Name - Left*/}
@@ -16,7 +16,7 @@ const Navbar = () => {
         {/* List of call to actions */}
         <button 
         className="py-2 px-6 bg-primary text-lg font-medium rounded-sm shadow-lg shadow-primary/50 hover:bg-primary/90 delay-50"
-        onClick={() => setOpenModal(true)}
+        onClick={() => setOpenLoginModal(true)}
         >
           Login
         </button>
