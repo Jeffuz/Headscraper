@@ -62,7 +62,14 @@ def login():
         user_info = auth.get_account_info(login['idToken'])
         return jsonify({"message": "Successfully logged in", "idToken": login['idToken'], "user_info": user_info}), 200
     except Exception as e:
-        return jsonify({"error": str(e)}), 400
+        error_message = str(e)
+        if "EMAIL_NOT_FOUND" in error_message:
+            error_message = "The email address is not registered."
+        elif "INVALID_PASSWORD" in error_message:
+            error_message = "The password is incorrect."
+        else:
+            error_message = "An error occurred. Please try again."
+        return jsonify({"error": error_message}), 400
 
 # http://localhost:5000/boards/<board_id>/assignments
 @app.route('/boards/<board_id>/assignments', methods=['POST'])
