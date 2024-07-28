@@ -74,7 +74,7 @@ def get_boards():
         if boards.each():
             return jsonify(boards.val()), 200
         else:
-            return jsonify({"message": "No boards found"}), 404
+            return jsonify([]), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 400
 
