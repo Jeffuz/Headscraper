@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { TfiBlackboard } from "react-icons/tfi";
 import { FaGoogle } from "react-icons/fa";
 import axios from "axios";
@@ -7,6 +7,7 @@ import Navbar from "./components/Navbar";
 import Modal from "./components/Modal";
 
 import { LoginContext } from "./contexts/LoginContext";
+import { AuthContext } from "./contexts/AuthContext";
 // import Dashboard from "./components/Dashboard";
 // import ScrumBoard from "./components/ScrumBoard";
 
@@ -17,6 +18,9 @@ function App() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
+  // Authentication
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
   // Handle Signup States
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
@@ -26,6 +30,14 @@ function App() {
   const [loginError, setLoginError] = useState(null);
   const [loginSuccess, setLoginSuccess] = useState(null);
   const [loginLoading, setLoginLoading] = useState(false);
+
+  // Check if user is authenticated
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      setIsAuthenticated(true);
+    }
+  }, []);
 
   // Submit form for signup
   const handleSignupSubmit = async (e) => {
@@ -39,6 +51,9 @@ function App() {
       setSuccess(response.data.message);
       setError(null);
       setLoading(false);
+      setOpenSignupModal(false);
+      setOpenLoginModal(true);
+      window.location.reload();
     } catch (error) {
       setError(error.response.data.error);
       setSuccess(null);
@@ -58,6 +73,9 @@ function App() {
       setLoginSuccess(response.data.message);
       setLoginError(null);
       setLoginLoading(false);
+      localStorage.setItem("token", response.data.idToken);
+      setOpenLoginModal(false);
+      window.location.reload();
     } catch (error) {
       setLoginError(error.response.data.error);
       setLoginSuccess(null);
@@ -75,18 +93,23 @@ function App() {
           setOpenSignupModal,
         }}
       >
-        {/* Navbar */}
-        <div className="py-8 px-16 fixed w-screen">
-          <Navbar />
-        </div>
-        {/* Dashboard */}
-        {/* <div className="">
+
+        {/* App */}
+        <AuthContext.Provider value={{ isAuthenticated, setIsAuthenticated }}>
+          {/* Navbar */}
+          <div className="py-8 px-16 fixed w-screen">
+            <Navbar />
+          </div>
+          {/* Dashboard */}
+          {/* <div className="">
           <Dashboard/>
         </div> */}
-        {/* Scrum Board */}
-        {/* <div>
+          {/* Scrum Board */}
+          {/* <div>
           <ScrumBoard/>
-        </div> */}
+          </div> */}
+        </AuthContext.Provider>
+
         {/* Pop up Modal for Login */}
         <Modal open={openLoginModal} onClose={() => setOpenLoginModal(false)}>
           <div className="flex flex-col justify-start text-white">
@@ -267,6 +290,7 @@ function App() {
                   onClick={() => {
                     setOpenSignupModal(false);
                     setOpenLoginModal(true);
+                    
                   }}
                   className="underline text-sm hover:text-primary delay-50"
                 >
