@@ -8,7 +8,7 @@ import Modal from "./components/Modal";
 
 import { LoginContext } from "./contexts/LoginContext";
 import { AuthContext } from "./contexts/AuthContext";
-// import Dashboard from "./components/Dashboard";
+import Dashboard from "./components/Dashboard";
 // import ScrumBoard from "./components/ScrumBoard";
 
 function App() {
@@ -94,17 +94,21 @@ function App() {
           setOpenSignupModal,
         }}
       >
-
         {/* App */}
         <AuthContext.Provider value={{ isAuthenticated, setIsAuthenticated }}>
           {/* Navbar */}
           <div className="py-8 px-16 fixed w-screen">
             <Navbar />
           </div>
-          {/* Dashboard */}
-          {/* <div className="">
-          <Dashboard/>
-        </div> */}
+          {/* Display dashboard if authenticated*/}
+          {isAuthenticated ? (
+            <div>
+              <Dashboard />
+            </div>
+          ) : (
+            // Display Landing Page if not authenticated
+            <></>
+          )}
           {/* Scrum Board */}
           {/* <div>
           <ScrumBoard/>
@@ -291,7 +295,6 @@ function App() {
                   onClick={() => {
                     setOpenSignupModal(false);
                     setOpenLoginModal(true);
-                    
                   }}
                   className="underline text-sm hover:text-primary delay-50"
                 >

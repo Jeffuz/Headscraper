@@ -14,7 +14,7 @@ const BoardCard = ({ title, description, lastUpdate }) => {
       {/* Last Updated */}
       <div className="flex items-center gap-2">
         <CiCalendar size={20} />
-        <div className="text-sm">{lastUpdate}</div>
+        <div className="text-sm"> Last updated on {lastUpdate}</div>
       </div>
     </div>
   );

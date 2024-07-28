@@ -4,22 +4,43 @@ import Modal from "./Modal";
 import { useState } from "react";
 import { TfiBlackboard } from "react-icons/tfi";
 import { IoRocketOutline } from "react-icons/io5";
+import { useEffect } from "react";
 
 import { BoardContext } from "../contexts/BoardContext";
-
-const mockData = [
-  {
-    id: 1,
-    title: "Task 1",
-    description: "Description for Task 1",
-    lastUpdate: "2 Days ago",
-  },
-];
+import axios from "axios";
 
 const Dashboard = () => {
   const [openNewBoard, setOpenNewBoard] = useState(false);
+  const [boards, setBoards] = useState([]);
+  const [error, setError] = useState(null);
 
-  const filledData = [...mockData];
+  useEffect(() => {
+    const fetchBoards = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const response = await axios.get("http://localhost:5000/boards", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        // Convert Response to an array
+        const boardsData = response.data;
+        const boardsArray = Object.keys(boardsData).map((key) => ({
+          id: key,
+          ...boardsData[key],
+        }));
+        setBoards(boardsArray);
+      } catch (error) {
+        setError(
+          error.response ? error.response.data.error : "Error fetching boards"
+        );
+      }
+    };
+
+    fetchBoards();
+  }, []);
+  
+  const filledData = [...boards];
   while (filledData.length < 3) {
     filledData.push({ id: `empty-${filledData.length}`, isEmpty: true });
   }
@@ -36,7 +57,7 @@ const Dashboard = () => {
                 key={item.id}
                 title={item.title}
                 description={item.description}
-                lastUpdate={item.lastUpdate}
+                lastUpdate={item.lastUpdated}
               />
             )
           )}
