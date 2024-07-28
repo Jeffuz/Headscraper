@@ -3,8 +3,11 @@ import os
 from datetime import datetime
 from flask import Flask, request, jsonify
 import pyrebase
+from flask_cors import CORS
+
 
 app = Flask(__name__)
+CORS(app)
 
 # Load environment variables from the .env file
 load_dotenv()
@@ -40,7 +43,14 @@ def signup():
         user = auth.create_user_with_email_and_password(email, password)
         return jsonify({"message": "Successfully created account"}), 201
     except Exception as e:
-        return jsonify({"error": str(e)}), 400
+        error_message = str(e)
+        if "WEAK_PASSWORD" in error_message:
+            error_message = "Password should be at least 6 characters."
+        elif "EMAIL_EXISTS" in error_message:
+            error_message = "The email address is already in use by another account."
+        return jsonify({"error": error_message}), 400
+    
+
 # http://localhost:5000/login
 @app.route('/login', methods=['POST'])
 def login():
