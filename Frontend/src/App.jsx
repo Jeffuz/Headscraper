@@ -74,6 +74,7 @@ function App() {
       setLoginError(null);
       setLoginLoading(false);
       localStorage.setItem("token", response.data.idToken);
+      localStorage.setItem("email", response.data.user_info.users[0].email);
       setOpenLoginModal(false);
       window.location.reload();
     } catch (error) {

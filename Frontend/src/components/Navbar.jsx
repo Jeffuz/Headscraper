@@ -16,6 +16,7 @@ const Navbar = () => {
   const handleLogout = () => {
     setIsAuthenticated(false);
     localStorage.removeItem("token");
+    localStorage.removeItem("email");
     window.location.reload();
   };
 
@@ -56,8 +57,8 @@ const Navbar = () => {
             </div>
             {/* Profile */}
             <div className="flex flex-col py-5 gap-2">
-              <div className="font-bold text-2xl">Welcome</div>
-              <div className="text-md">Username</div>
+              <div className="font-bold text-2xl">Profile</div>
+              <div className="text-md">Hello <span className="italic">{localStorage.getItem("email")}</span>! 👋</div>
             </div>
             {/* Logout */}
             <div className="flex">
