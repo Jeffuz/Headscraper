@@ -50,6 +50,33 @@ def signup():
             error_message = "The email address is already in use by another account."
         return jsonify({"error": error_message}), 400
     
+# http://localhost:5000/boards
+@app.route('/boards', methods=['GET'])
+def get_boards():
+    auth_header = request.headers.get('Authorization')
+    if not auth_header:
+        return jsonify({"error": "Authorization header is missing"}), 401
+
+    parts = auth_header.split(' ')
+    if len(parts) != 2 or parts[0] != 'Bearer':
+        return jsonify({"error": "Invalid Authorization header format"}), 400
+
+    token = parts[1]
+
+    try:
+        user_id = get_user_id(token)
+        if not user_id:
+            return jsonify({"error": "Invalid token"}), 401
+
+        boards_ref = db.child(f'boards/{user_id}')
+        boards = boards_ref.get()
+
+        if boards.each():
+            return jsonify(boards.val()), 200
+        else:
+            return jsonify({"message": "No boards found"}), 404
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
 
 # http://localhost:5000/login
 @app.route('/login', methods=['POST'])
