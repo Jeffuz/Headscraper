@@ -6,6 +6,8 @@ import { TfiBlackboard } from "react-icons/tfi";
 import { IoRocketOutline } from "react-icons/io5";
 import { useEffect } from "react";
 
+import ScrumBoard from "./ScrumBoard"
+
 import { BoardContext } from "../contexts/BoardContext";
 import axios from "axios";
 
@@ -14,6 +16,9 @@ const Dashboard = () => {
   const [boards, setBoards] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Select a board
+  const [selectedBoard, setSelectedBoard] = useState(null);
 
   // Board Information
   const [boardName, setBoardName] = useState("");
@@ -81,6 +86,11 @@ const Dashboard = () => {
     setLoading(false);
   }, []);
 
+  // Board is clicked
+  const handleBoardClick = (board) => {
+    setSelectedBoard(board);
+  };
+
   // Proxy boards if empty
   const filledData = [...boards];
   while (filledData.length < 3) {
@@ -112,6 +122,17 @@ const Dashboard = () => {
     );
   }
 
+  // Render board if board is selected
+  if (selectedBoard) {
+    console.log("True")
+    return (
+      <ScrumBoard
+        board={selectedBoard}
+        onClose={() => setSelectedBoard(null)}
+      />
+    );
+  }
+
   return (
     <BoardContext.Provider value={{ openNewBoard, setOpenNewBoard }}>
       <div className=" text-white flex flex-col">
@@ -124,9 +145,11 @@ const Dashboard = () => {
               ) : (
                 <BoardCard
                   key={item.id}
+                  id={item.id}
                   title={item.title}
                   description={item.description}
                   lastUpdate={item.lastUpdated}
+                  onClick={() => handleBoardClick(item)}
                 />
               )
             ) : null

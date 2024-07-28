@@ -5,10 +5,10 @@ import { useState } from "react";
 import { TfiBlackboard } from "react-icons/tfi";
 
 
-const BoardCard = ({ title, description, lastUpdate }) => {
+const BoardCard = ({ id, title, description, lastUpdate, onClick }) => {
   const [open, setOpen] = useState(false);
   return (
-    <div className="flex flex-col bg-[#050916] p-8 border rounded-lg gap-6 cursor-pointer min-h-full">
+    <div onClick={onClick} className="flex flex-col bg-[#050916] p-8 border rounded-lg gap-6 cursor-pointer min-h-full">
       {/* Title Bar */}
       <div className="flex justify-between items-center">
         <div className="font-semibold text-2xl">{title}</div>
