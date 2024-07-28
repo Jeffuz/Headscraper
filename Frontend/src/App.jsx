@@ -7,6 +7,7 @@ import Modal from "./components/Modal";
 
 import { LoginContext } from "./contexts/LoginContext";
 import Dashboard from "./components/Dashboard";
+import ScrumBoard from "./components/ScrumBoard";
 
 function App() {
   const [openLoginModal, setOpenLoginModal] = useState(false);
@@ -27,8 +28,12 @@ function App() {
           <Navbar />
         </div>
         {/* Dashboard */}
-        <div className="">
+        {/* <div className="">
           <Dashboard/>
+        </div> */}
+        {/* Scrum Board */}
+        <div>
+          <ScrumBoard/>
         </div>
         {/* Pop up Modal for Login */}
         <Modal open={openLoginModal} onClose={() => setOpenLoginModal(false)}>
